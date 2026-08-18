@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Component</title>
+</head>
+<body>
+  
+  <h1>Динамически загружаемый веб-компонент</h1>
+  <div id="app"></div>
+  
+  <script>
+    const components = ["my-select"];
+    const onLoad = (event) => {
+      const scriptElement = event.target;
+      const componentName = scriptElement.dataset.name;
+      console.log("Скрипт для компонента загружен");
+      const app = document.getElementById("app");
+      app.innerHTML = `<${componentName}></${componentName}>`;
+      console.log("Элемент создан и добавлен");
+    };
+    const onError = (error) => {
+      console.error("Ошибка загрузки скрипта:", error);
+    };
+    components.forEach((component) => {
+      const script = document.createElement("script");
+      script.src = `./${component}.js`;
+      script.dataset.name = component;
+      script.addEventListener("load", onLoad);
+      script.addEventListener("error", onError);
+      document.body.append(script);
+    });
+  </script>
+</body>
+</html>
