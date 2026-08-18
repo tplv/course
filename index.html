@@ -17,7 +17,14 @@
       const componentName = scriptElement.dataset.name;
       console.log("Скрипт для компонента загружен");
       const app = document.getElementById("app");
-      app.innerHTML = `<${componentName}></${componentName}>`;
+      
+      app.innerHTML = `
+        <my-select>
+          <option value="opt1">Option 1</option>
+          <option value="opt2">Option 2</option>
+          <option value="opt3">Option 3</option>
+        </my-select>
+      `;
       console.log("Элемент создан и добавлен");
     };
     const onError = (error) => {
