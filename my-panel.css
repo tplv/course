@@ -1,0 +1,51 @@
+:host {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  max-width: 400px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  user-select: none;
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+  margin: 0;
+}
+
+.panel-toggle {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: transform 0.3s ease;
+}
+
+.panel-toggle.open {
+  transform: rotate(180deg);
+}
+
+.panel-content {
+  padding: 20px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.panel-content.closed {
+  display: none;
+}

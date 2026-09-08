@@ -11,21 +11,23 @@
   <div id="app"></div>
   
   <script>
-    const components = ["my-select"];
+    const components = ["my-select", "my-panel"];
     const onLoad = (event) => {
       const scriptElement = event.target;
       const componentName = scriptElement.dataset.name;
-      console.log("Скрипт для компонента загружен");
       const app = document.getElementById("app");
       
-      app.innerHTML = `
-        <my-select>
-          <option value="opt1">Option 1</option>
-          <option value="opt2">Option 2</option>
-          <option value="opt3">Option 3</option>
-        </my-select>
-      `;
-      console.log("Элемент создан и добавлен");
+      if (componentName === "my-panel") {
+        app.innerHTML = `
+          <my-panel header="Настройки фильтра" toggleable>
+            <my-select>
+              <option value="opt1">Option 1</option>
+              <option value="opt2">Option 2</option>
+              <option value="opt3">Option 3</option>
+            </my-select>
+          </my-panel>
+        `;
+      }
     };
     const onError = (error) => {
       console.error("Ошибка загрузки скрипта:", error);
