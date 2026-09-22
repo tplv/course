@@ -8,190 +8,39 @@ class MySelect extends HTMLElement {
   #selectPopup;
   #selectPopupSearch;
   #optionsBox;
+  #options = [];
+  #selectedValues = [];
+  #onDocumentClick;
 
   constructor() {
     super();
     console.log("Веб-компонент создан");
   }
 
-  connectedCallback() {
+  async connectedCallback() {
     this.#shadow = this.attachShadow({ mode: "open" });
+    await this.#loadStyles();
     this.#createTemplate();
     this.#renderOptions();
     this.#addEventListeners();
+    this.#updateButtonText();
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener("click", this.#onDocumentClick);
+  }
+
+  async #loadStyles() {
+    const response = await fetch("./my-select.css");
+    const css = await response.text();
+    const style = document.createElement("style");
+    style.textContent = css;
+    this.#shadow.appendChild(style);
   }
 
   #createTemplate() {
     const template = document.createElement("template");
     template.innerHTML = `
-      <style>
-        :host {
-          position: relative;
-          display: inline-block;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          width: 100%;
-          max-width: 350px;
-          min-width: 250px;
-        }
-
-        .select-button {
-          width: 100%;
-          padding: 12px 40px 12px 16px;
-          font-size: 14px;
-          font-family: inherit;
-          color: #495057;
-          background: #ffffff;
-          border: 1px solid #ced4da;
-          border-radius: 6px;
-          cursor: pointer;
-          text-align: left;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          transition: all 0.2s ease;
-          position: relative;
-          user-select: none;
-          min-height: 42px;
-        }
-
-        .select-button:hover {
-          border-color: #86b7fe;
-          background: #f8f9fa;
-        }
-
-        .select-button:focus {
-          outline: none;
-          border-color: #86b7fe;
-          box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
-        }
-
-        .select-button::after {
-          content: "▾";
-          position: absolute;
-          right: 14px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 12px;
-          color: #6c757d;
-          transition: transform 0.2s ease;
-        }
-
-        .select-popup {
-          display: none;
-          position: absolute;
-          top: calc(100% + 6px);
-          left: 0;
-          width: 100%;
-          background: var(--select-popup-background, #ffffff);
-          border: 1px solid #ced4da;
-          border-radius: 6px;
-          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-          padding: 8px 0;
-          z-index: 1000;
-          max-height: 280px;
-          overflow: hidden;
-          flex-direction: column;
-        }
-
-        .select-popup.open {
-          display: flex;
-          animation: slideDown 0.15s ease;
-        }
-
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .select-popup input {
-          width: 100%;
-          padding: 10px 14px;
-          font-size: 14px;
-          font-family: inherit;
-          color: #495057;
-          background: #ffffff;
-          border: none;
-          border-bottom: 1px solid #e9ecef;
-          outline: none;
-          box-sizing: border-box;
-          margin: 0;
-          min-height: 40px;
-        }
-
-        .select-popup input::placeholder {
-          color: #adb5bd;
-          font-weight: 300;
-        }
-
-        .select-popup input:focus {
-          border-bottom-color: #86b7fe;
-        }
-
-        .select-popup-options {
-          flex: 1;
-          overflow-y: auto;
-          padding: 4px 0;
-          max-height: 220px;
-        }
-
-        .select-popup-options::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .select-popup-options::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .select-popup-options::-webkit-scrollbar-thumb {
-          background: #ced4da;
-          border-radius: 3px;
-        }
-
-        .select-popup-options::-webkit-scrollbar-thumb:hover {
-          background: #adb5bd;
-        }
-
-        .option {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 8px 14px;
-          font-size: 14px;
-          color: #495057;
-          cursor: pointer;
-          transition: background 0.15s ease;
-          user-select: none;
-        }
-
-        .option:hover {
-          background: #e9ecef;
-        }
-
-        .option input[type="checkbox"] {
-          width: 16px;
-          height: 16px;
-          margin: 0;
-          cursor: pointer;
-          accent-color: #0d6efd;
-          flex-shrink: 0;
-        }
-
-        .option input[type="checkbox"]:checked {
-          accent-color: #0d6efd;
-        }
-
-        .option input[type="checkbox"]:focus {
-          outline: 2px solid #86b7fe;
-          outline-offset: 1px;
-        }
-      </style>
-
       <button class="select-button"><!--Здесь будет выбранная опция--></button>
       <div class="select-popup">
         <input placeholder="Search..." />
@@ -210,14 +59,14 @@ class MySelect extends HTMLElement {
   #renderOptions() {
     const optionElements = this.querySelectorAll("option");
     
-    const options = Array.from(optionElements).map(option => ({
+    this.#options = Array.from(optionElements).map(option => ({
       value: option.value || option.textContent.trim(),
       label: option.textContent.trim()
     }));
 
     optionElements.forEach(option => option.remove());
 
-    const optionsFragment = this.#createOptionsFragment(options);
+    const optionsFragment = this.#createOptionsFragment(this.#options);
     this.#optionsBox.appendChild(optionsFragment);
   }
 
@@ -226,7 +75,7 @@ class MySelect extends HTMLElement {
     
     const optionsHTML = options.map(opt => `
       <label class="option" data-value="${opt.value}">
-        <input type="checkbox" />
+        <input type="checkbox" value="${opt.value}" />
         ${opt.label}
       </label>
     `).join("");
@@ -236,11 +85,79 @@ class MySelect extends HTMLElement {
   }
 
   #addEventListeners() {
-    this.#selectButton.addEventListener("click", () => this.#openPopup());
+    this.#selectButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.#selectPopup.classList.toggle("open");
+      if (this.#selectPopup.classList.contains("open")) {
+        this.#selectPopupSearch.focus();
+      }
+    });
+
+    this.#selectPopupSearch.addEventListener("input", (e) => {
+      this.#filterOptions(e.target.value);
+    });
+
+    this.#optionsBox.addEventListener("change", (e) => {
+      if (e.target.type === "checkbox") {
+        this.#updateSelectedValues();
+      }
+    });
+
+    this.#onDocumentClick = (e) => {
+      if (!e.composedPath().includes(this)) {
+        this.#selectPopup.classList.remove("open");
+      }
+    };
+    document.addEventListener("click", this.#onDocumentClick);
   }
 
-  #openPopup() {
-    this.#selectPopup.classList.toggle("open");
+  #filterOptions(searchText) {
+    const searchLower = searchText.toLowerCase().trim();
+    const optionLabels = this.#optionsBox.querySelectorAll(".option");
+    
+    optionLabels.forEach((label, index) => {
+      const option = this.#options[index];
+      if (searchLower === "" || option.label.toLowerCase().includes(searchLower)) {
+        label.style.display = "flex";
+      } else {
+        label.style.display = "none";
+      }
+    });
+  }
+
+  #updateSelectedValues() {
+    const checkboxes = this.#optionsBox.querySelectorAll('input[type="checkbox"]:checked');
+    this.#selectedValues = Array.from(checkboxes).map(cb => cb.value);
+    this.value = this.#selectedValues.join(",");
+    this.#updateButtonText();
+    this.dispatchEvent(new CustomEvent('change', { detail: { value: this.value } }));
+  }
+
+  #updateButtonText() {
+    if (this.#selectedValues.length === 0) {
+      this.#selectButton.textContent = "Выберите опции...";
+    } else {
+      const selectedLabels = this.#options
+        .filter(opt => this.#selectedValues.includes(opt.value))
+        .map(opt => opt.label);
+      
+      this.#selectButton.textContent = selectedLabels.join(", ");
+    }
+  }
+
+  get value() {
+    return this.#selectedValues.join(",");
+  }
+
+  set value(val) {
+    if (typeof val === "string") {
+      this.#selectedValues = val ? val.split(",") : [];
+      const checkboxes = this.#optionsBox.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        cb.checked = this.#selectedValues.includes(cb.value);
+      });
+      this.#updateButtonText();
+    }
   }
 }
 
