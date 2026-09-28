@@ -1,81 +1,89 @@
-const currentScript = document.currentScript;
-const componentName = currentScript.dataset.name;
+(() => {
+  const currentScript = document.currentScript;
+  const componentName = currentScript.dataset.name;
 
-class MyPanel extends HTMLElement {
-  #shadow;
-  #header;
-  #content;
-  #isOpen = true;
+  const stylesCache = {};
 
-  constructor() {
-    super();
-  }
+  class MyPanel extends HTMLElement {
+    #shadow;
+    #header;
+    #content;
+    #isOpen = true;
 
-  async connectedCallback() {
-    this.#shadow = this.attachShadow({ mode: "open" });
-    await this.#loadStyles();
-    this.#createTemplate();
-    this.#addEventListeners();
-  }
+    constructor() {
+      super();
+      this.#shadow = this.attachShadow({ mode: "open" });
+    }
 
-  async #loadStyles() {
-    const response = await fetch("./my-panel.css");
-    const css = await response.text();
-    const style = document.createElement("style");
-    style.textContent = css;
-    this.#shadow.appendChild(style);
-  }
+    async connectedCallback() {
+      await this.#loadStyles();
+      this.#createTemplate();
+      this.#addEventListeners();
+    }
 
-  #createTemplate() {
-    const template = document.createElement("template");
-    const headerText = this.getAttribute("header") || "Заголовок";
-    const toggleable = this.hasAttribute("toggleable");
+    async #loadStyles() {
+      if (!stylesCache[componentName]) {
+        const response = await fetch("./my-panel.css");
+        stylesCache[componentName] = await response.text();
+      }
+      const style = document.createElement("style");
+      style.textContent = stylesCache[componentName];
+      this.#shadow.appendChild(style);
+    }
 
-    template.innerHTML = `
-      <div class="panel-header" style="cursor: ${toggleable ? 'pointer' : 'default'}">
-        <div class="panel-title">${headerText}</div>
-        <button class="panel-toggle open" style="display: ${toggleable ? 'block' : 'none'}">▾</button>
-      </div>
-      <div class="panel-content">
-        <slot></slot>
-      </div>
-    `;
+    #createTemplate() {
+      const template = document.createElement("template");
+      const toggleable = this.hasAttribute("toggleable");
 
-    this.#shadow.appendChild(template.content.cloneNode(true));
+      template.innerHTML = `
+        <div class="panel-header" style="cursor: ${toggleable ? 'pointer' : 'default'}">
+          <div class="panel-title"></div>
+          <button class="panel-toggle open" style="display: ${toggleable ? 'block' : 'none'}">▾</button>
+        </div>
+        <div class="panel-content">
+          <slot></slot>
+        </div>
+      `;
 
-    this.#header = this.#shadow.querySelector(".panel-header");
-    this.#content = this.#shadow.querySelector(".panel-content");
-    this.#isOpen = true;
-  }
+      this.#shadow.appendChild(template.content.cloneNode(true));
 
-  #addEventListeners() {
-    if (this.hasAttribute("toggleable")) {
-      this.#header.addEventListener("click", () => {
+      this.#header = this.#shadow.querySelector(".panel-header");
+      this.#content = this.#shadow.querySelector(".panel-content");
+      this.#isOpen = true;
+
+      const headerText = this.getAttribute("header") || "Заголовок";
+      this.#shadow.querySelector(".panel-title").textContent = headerText;
+    }
+
+    #addEventListeners() {
+      if (this.hasAttribute("toggleable")) {
+        this.#header.addEventListener("click", () => {
+          this.#togglePanel();
+        });
+      }
+    }
+
+    #togglePanel() {
+      this.#isOpen = !this.#isOpen;
+      const toggleBtn = this.#shadow.querySelector(".panel-toggle");
+      toggleBtn.classList.toggle("open", this.#isOpen);
+      this.#content.classList.toggle("closed", !this.#isOpen);
+
+      this.dispatchEvent(new CustomEvent('toggle', {
+        detail: { open: this.#isOpen }
+      }));
+    }
+
+    get open() {
+      return this.#isOpen;
+    }
+
+    set open(val) {
+      if (val !== this.#isOpen) {
         this.#togglePanel();
-      });
+      }
     }
   }
 
-  #togglePanel() {
-    this.#isOpen = !this.#isOpen;
-    const toggleBtn = this.#shadow.querySelector(".panel-toggle");
-    toggleBtn.classList.toggle("open", this.#isOpen);
-    this.#content.classList.toggle("closed", !this.#isOpen);
-    
-    this.dispatchEvent(new CustomEvent('toggle', { 
-      detail: { open: this.#isOpen } 
-    }));
-  }
-
-  get open() {
-    return this.#isOpen;
-  }
-
-  set open(val) {
-    if (val !== this.#isOpen) {
-      this.#togglePanel();
-    }
-  }
-}
-
-customElements.define(componentName, MyPanel);
+  customElements.define(componentName, MyPanel);
+})();

@@ -167,3 +167,11 @@
 .option.hidden {
   display: none;
 }
+
+.no-results {
+  display: none;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #adb5bd;
+  text-align: center;
+}
