@@ -1,14 +1,9 @@
-const slowFunction = (timeout = 3000) => {
-  let start = performance.now();
-  let x = 0;
-  let i = 0;
-  do {
-    i += 1;
-    x += (Math.random() - 0.5) * i;
-  } while (performance.now() - start < timeout);
-  return x;
-};
+const thread2 = new Worker("./thread2.js");
 
-const result = slowFunction(3000);
+self.addEventListener('message', (evt) => {
+  thread2.postMessage(evt.data);
+});
 
-self.postMessage(result);
+thread2.addEventListener('message', (evt) => {
+  self.postMessage(evt.data);
+});

@@ -49,12 +49,14 @@
       if (!thread) {
         thread = new Worker("./thread.js");
 
-        thread.onmessage = (e) => {
+        thread.addEventListener('message', (e) => {
           document.getElementById('result').textContent = e.data;
           thread.terminate();
           thread = null;
-        };
+        });
       }
+
+      thread.postMessage({ timeout: 3000 });
     });
   </script>
 </body>
