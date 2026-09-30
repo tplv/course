@@ -51,10 +51,10 @@
 
         thread.onmessage = (e) => {
           document.getElementById('result').textContent = e.data;
-          thread.terminate();
-          thread = null;
         };
       }
+
+      thread.postMessage('start');
     });
   </script>
 </body>

@@ -9,6 +9,7 @@ const slowFunction = (timeout = 3000) => {
   return x;
 };
 
-const result = slowFunction(3000);
-
-self.postMessage(result);
+self.onmessage = () => {
+  const result = slowFunction(3000);
+  self.postMessage(result);
+};
